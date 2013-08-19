@@ -40,40 +40,41 @@ import sys
 import random
 import time
 
-''' Connection details go here '''
-amqpServer = "host:port"
-amqpQueue = "queuename"
-amqpVhost = "/"
+# Connection details go here
+amqpServer = "<IP ADDRESS>:<AMQP PORT>"
+amqpQueue = "<QUEUE NAME>"
+amqpVhost = "<VIRTUAL HOST>"
 amqpSsl = True
-amqpUid = "username"
-amqpPass = "password"
+amqpUid = "<AMQP USERNAME>"
+amqpPass = "<AMQP PASSWORD>"
 
-''' Number of seconds before message is considered timed out'''
+# Number of seconds before message is considered timed out
 timeout = 4
-''' Number of seconds before the received message is considered late and a warning is raised'''
-recievedTimeWarning = 2
+# Number of seconds before the received message is considered late and a warning is raised
+receivedTimeWarning = 2
 
-''' Function to check the header of a passed message and check it. If it matches the sent message
-the function checks the time it took to arrive and exits with the appropriate state. If the message does not
-match the sent message ID it is discarded. '''
-def recieve_callback(msg):
+# Function to check the header of a passed message and check it. If it matches the sent message
+# the function checks the time it took to arrive and exits with the apropriate state. If the message does not
+# match the sent message ID it is discarded.
+def receive_callback(msg):
     recTime = time.time()
     recMessageID = msg.application_headers['messID']
     timeDiff = recTime - sendTime
 
-    if recMessageID == messageID and timeDiff < recievedTimeWarning:
+    if recMessageID == messageID and timeDiff < receivedTimeWarning:
         print "Test message received in %s seconds" % timeDiff
-        sys.exit(0)
         amqpChan.close()
         amqpConn.close()
-    if recMessageID == messageID and timeDiff > recievedTimeWarning:
+        sys.exit(0)
+    if recMessageID == messageID and timeDiff > receivedTimeWarning:
         print "Test message received in %s seconds" % timeDiff
         amqpChan.close()
         amqpConn.close()
         sys.exit(1)
+
     pull_message()
 
-''' Funtion to pull a single message from the queue and continue checking for messages until the timeout is reached  '''
+# Funtion to pull a single message from the queue and continue checking for messages until the timeout is reached
 def pull_message():
     slept = 0
     sleepInterval = 0.1
@@ -81,7 +82,7 @@ def pull_message():
         msg = amqpChan.basic_get(amqpQueue)
         if msg is not None:
             amqpChan.basic_ack(msg.delivery_tag)
-            recieve_callback(msg)
+            receive_callback(msg)
         time.sleep(sleepInterval)
         slept += sleepInterval
     print "Timeout (%s seconds) expired while waiting for test message." % timeout
@@ -89,24 +90,19 @@ def pull_message():
     amqpConn.close()
     sys.exit(2)
 
-''' A try to test connection to the AMQP resource. If the connection fails the script exits with a critical exit status '''
-try:
-    amqpConn = amqp.Connection(host=amqpServer, userid=amqpUid, password=amqpPass, virtual_host=amqpVhost, insist=False, ssl=amqpSsl)
-    amqpChan = amqpConn.channel()
-    amqpChan.queue_declare(queue=amqpQueue, durable=True, auto_delete=False)
-    amqpChan.exchange_declare(exchange=amqpQueue, type="direct", durable=True, auto_delete=False,)
-    amqpChan.queue_bind(queue=amqpQueue, exchange=amqpQueue, routing_key=amqpQueue)
-except:
-    print "Cannot connect to queue: %s on %s" % (amqpQueue, amqpServer)
-    amqpChan.close()
-    amqpConn.close()
-    sys.exit(2)
+# A try to test connection to the AMQP resource. If the connection fails the script exits with a critical exit status
+#try:
+amqpConn = amqp.Connection(host=amqpServer, userid=amqpUid, password=amqpPass, virtual_host=amqpVhost, insist=False, ssl=amqpSsl)
+amqpChan = amqpConn.channel()
+amqpChan.queue_declare(queue=amqpQueue, durable=True, auto_delete=False)
+amqpChan.exchange_declare(exchange=amqpQueue, type="direct", durable=True, auto_delete=False)
+amqpChan.queue_bind(queue=amqpQueue, exchange=amqpQueue, routing_key=amqpQueue)
 
-''' Generating a random message ID and sending a single message '''
-messageID = str(random.randint(1,1000000))
-testMsg = amqp.Message(messageID,application_headers={'messID': messageID})
+# Generating a random message ID and sending a single message
+messageID = str(random.randint(1, 1000000))
+testMsg = amqp.Message(messageID, application_headers={'messID': messageID})
 testMsg.properties["delivery_mode"] = 1
 sendTime = time.time()
-amqpChan.basic_publish(testMsg,exchange=amqpQueue,routing_key=amqpQueue)
+amqpChan.basic_publish(testMsg, exchange=amqpQueue, routing_key=amqpQueue)
 
 pull_message()
