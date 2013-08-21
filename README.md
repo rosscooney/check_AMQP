@@ -20,6 +20,28 @@ Once connected the plugin publishes a single message to the queue with a random 
 
 If the message is received the plugin checks if it is above or below the recievedTimeWarning threshold and either exits OK or with a warning.
 
+Install Instructions
+==========
+
+Assuming that Nagios is installed in the default directory (/usr/local/nagios/libexec/).
+
+Place the file in this directory:
+/usr/local/nagios/libexec/
+
+An example of the text you can add to the nagios config file:
+define host{
+        use                     linux-server
+        host_name               AMQPserver
+        alias                   AMQPserver
+        address                 <<IP ADDRESS OF SERVER>>
+}
+define service{
+        use                             generic-service
+        host_name                       AMQPserver
+        service_description             Check AMQP Connection
+        check_command                   check_nrpe!check_amqp
+}
+
 Requirements
 ==============
 Python 2.6
