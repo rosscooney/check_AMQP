@@ -78,16 +78,21 @@ def receive_callback(msg):
     recMessageID = msg.application_headers['messID']
     timeDiff = recTime - sendTime
 
-    if recMessageID == messageID and timeDiff < receivedTimeWarning:
-        print "Test message received in %s seconds" % timeDiff
+    if recMessageID == messageID:
         amqpChan.close()
         amqpConn.close()
-        sys.exit(0)
-    if recMessageID == messageID and timeDiff > receivedTimeWarning:
-        print "Test message received in %s seconds" % timeDiff
-        amqpChan.close()
-        amqpConn.close()
-        sys.exit(1)
+
+        if timeDiff > timeout:
+            print "CRITICAL - Test message received in %s seconds|roundtrip=%s" % (timeDiff, timeDiff)
+            sys.exit(2)
+
+        if timeDiff > receivedTimeWarning:
+            print "WARNING - Test message received in %s seconds|roundtrip=%s" % (timeDiff, timeDiff)
+            sys.exit(1)
+
+        if timeDiff < receivedTimeWarning:
+            print "OK - Test message received in %s seconds|roundtrip=%s" % (timeDiff, timeDiff)
+            sys.exit(0)
 
     pull_message()
 
