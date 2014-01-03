@@ -28,6 +28,18 @@ Assuming that Nagios is installed in the default directory (/usr/local/nagios/li
 Place the file in this directory:
 /usr/local/nagios/libexec/
 
+Installation with virtualenv
+----------------------------
+
+> cd /usr/local/nagios/libexec/
+> git clone <repourl>
+> cd check_AMQP
+> virtualenv venv
+> . venv/bin/activate
+> pip install -r requirements.txt
+
+Configuration
+=============
 An example of the text you can add to the nagios config file:
 define host{
         use                     linux-server
