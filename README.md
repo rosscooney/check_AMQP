@@ -41,18 +41,25 @@ Installation with virtualenv
 Configuration
 =============
 An example of the text you can add to the nagios config file:
-define host{
-        use                     linux-server
-        host_name               AMQPserver
-        alias                   AMQPserver
-        address                 <<IP ADDRESS OF SERVER>>
-}
-define service{
-        use                             generic-service
-        host_name                       AMQPserver
-        service_description             Check AMQP Connection
-        check_command                   check_nrpe!check_amqp
-}
+
+> define host{
+>         use                     linux-server
+>         host_name               AMQPserver
+>         alias                   AMQPserver
+>         address                 <<IP ADDRESS OF SERVER>>
+> }
+> 
+> define command {
+>         command_name    check_amqp
+>         command_line    /usr/lib/nagios/plugins/check_AMQP/check_amqp --ssl --host '$HOSTADDRESS$' --port 5672 --queue monitoring_test_queue --vhost '$ARG1$' --user '$ARG2$' --password '$ARG3$' --warning 0.05 --critical 0.5
+> }
+> 
+> define service{
+>         use                             generic-service
+>         host_name                       AMQPserver
+>         service_description             Check AMQP Connection
+>         check_command                   check_amqp!/!guest!guest
+> }
 
 Requirements
 ==============
@@ -61,6 +68,5 @@ py-amqplib : http://code.google.com/p/py-amqplib/
 
 Future
 ==============
-* I might change the script to accept the connection details as command line arguments but they could be a bit long.
 * Testing on other AMQP services
 * Support for AMQP 0.9, 0.10 and 1.0

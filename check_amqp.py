@@ -40,18 +40,35 @@ import sys
 import random
 import time
 
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("--host", action="store", type="string", dest="host", default="localhost")
+parser.add_option("--port", action="store", type="int", dest="port", default=5672)
+parser.add_option("--ssl", action="store_true", dest="ssl", default=False)
+
+parser.add_option("--vhost", action="store", type="string", dest="vhost", default="/")
+parser.add_option("--queue", action="store", type="string", dest="queue", default="monitoring_queue")
+parser.add_option("--user", action="store", type="string", dest="user", default="guest")
+parser.add_option("--password", action="store", type="string", dest="password", default="guest")
+
+parser.add_option("--critical", action="store", type="float", dest="critical", metavar="SECONDS", default=4.0)
+parser.add_option("--warning", action="store", type="float", dest="warning", metavar="SECONDS", default=2.0)
+
+(options, args) = parser.parse_args(sys.argv)
+
 # Connection details go here
-amqpServer = "<IP ADDRESS>:<AMQP PORT>"
-amqpQueue = "<QUEUE NAME>"
-amqpVhost = "<VIRTUAL HOST>"
-amqpSsl = True
-amqpUid = "<AMQP USERNAME>"
-amqpPass = "<AMQP PASSWORD>"
+amqpServer = "%s:%i" % (options.host, options.port)
+amqpQueue = "%s" % options.queue
+amqpVhost = options.vhost
+amqpSsl = options.ssl
+amqpUid = options.user
+amqpPass = options.password
 
 # Number of seconds before message is considered timed out
-timeout = 4
+timeout = options.critical
 # Number of seconds before the received message is considered late and a warning is raised
-receivedTimeWarning = 2
+receivedTimeWarning = options.warning
 
 # Function to check the header of a passed message and check it. If it matches the sent message
 # the function checks the time it took to arrive and exits with the apropriate state. If the message does not
